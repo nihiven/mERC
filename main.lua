@@ -29,9 +29,6 @@ TypeDB[TYPES.INTEGER] = { multi_char = true }
 TypeDB[TYPES.PLUS] = { multi_char = false }
 TypeDB[TYPES.EOF] = { multi_char = false }
 
-print(Inspect(TypeDB))
-
-
 ---- Token Class
 Token = class()
 
@@ -64,6 +61,8 @@ function Interpreter:init(text)
   self._pos = 0
   -- current token instance (string)
   self._current_token = nil
+
+  print(self._text)
 end
 
 function Interpreter:error(text)
@@ -82,7 +81,7 @@ function Interpreter:get_next_token()
 
   -- is self._pos index past the end of the self._text?
   -- if so, then return a TYPES.EOF token because there is no input
-  if (self._pos > string.len(text)-1) then
+  if (self._pos > string.len(self._text)-1) then
     print('GNT > ','EOF')
     return Token(TYPES.EOF, nil)
   end
@@ -99,12 +98,14 @@ function Interpreter:get_next_token()
     print('GNT > ','INTEGER')
     local current_token_value = self:current_char()
     self._pos = self._pos + 1
+
     while (is_integer(self:current_char())) do
       print('ADD CHAR > ','INTEGER')
       current_token_value = current_token_value .. self:current_char()
       self._pos = self._pos + 1
-      return Token(TYPES.INTEGER, self:current_char())
     end
+
+    return Token(TYPES.INTEGER, current_token_value)
   end
 
   if (self:current_char() == '+') then
