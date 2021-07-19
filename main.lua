@@ -10,6 +10,7 @@
 ]]
 
 require 'class' -- https://github.com/jonstoler/class.lua
+require 'helpers' -- little helpers!
 Inspect = require 'inspect' -- luarocks install inspect
 
 --[[
@@ -24,9 +25,9 @@ TYPES = {
 }
 
 TypeDB = { }
-TypeDB[TYPES.INTEGER] = {  multi_char = true }
-TypeDB[TYPES.PLUS] = {  multi_char = false }
-TypeDB[TYPES.EOF] = {  multi_char = false }
+TypeDB[TYPES.INTEGER] = { multi_char = true }
+TypeDB[TYPES.PLUS] = { multi_char = false }
+TypeDB[TYPES.EOF] = { multi_char = false }
 
 print(Inspect(TypeDB))
 
@@ -69,12 +70,15 @@ function Interpreter:error(text)
   error('Error: ' .. text)
 end
 
+function Interpreter:current_char()
+  return self._text:sub(self._pos+1, self._pos+1)
+end
+
 function Interpreter:get_next_token()
   --[[
     Lexical Analyzer (scanner/tokenizer)
     Responsible for breaking a string apart into tokens.
   ]]
-  local text = self._text
 
   -- is self._pos index past the end of the self._text?
   -- if so, then return a TYPES.EOF token because there is no input
@@ -85,26 +89,31 @@ function Interpreter:get_next_token()
 
   -- get a character at the position self._pos and decide
   -- what token to create based on the single character
-  local current_char = text:sub(self._pos+1, self._pos+1)
-  print('Current char: ', current_char)
+    print('Current char: ', self:current_char())
 
   -- if the character is a digit then convert it to
   -- integer, create a TYPES.INTEGER token, increment self._pos
   -- index to point to the next character after the digit,
   -- and return the TYPES.INTEGER token
-  if (current_char == tostring(math.tointeger(current_char))) then
+  if (is_integer(self:current_char())) then
     print('GNT > ','INTEGER')
+    local current_token_value = self:current_char()
     self._pos = self._pos + 1
-    return Token(TYPES.INTEGER, current_char)
+    while (is_integer(self:current_char())) do
+      print('ADD CHAR > ','INTEGER')
+      current_token_value = current_token_value .. self:current_char()
+      self._pos = self._pos + 1
+      return Token(TYPES.INTEGER, self:current_char())
+    end
   end
 
-  if (current_char == '+') then
+  if (self:current_char() == '+') then
     print('GNT > ','PLUS')
     self._pos = self._pos + 1
-    return Token(TYPES.PLUS, current_char)
+    return Token(TYPES.PLUS, self:current_char())
   end
 
-  self:error('getting next token: ' .. current_char)
+  self:error('getting next token: ' .. self:current_char())
 end
 
 function Interpreter:eat(token_type)
